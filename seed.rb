@@ -1,4 +1,6 @@
 require_relative 'initializer'
+require 'pragmatic_segmenter'
+
 folders = Dir.glob("knowledge_base/*").select { |f| File.directory?(f) }
 
 documents = []
@@ -29,10 +31,39 @@ def split_text(text, chunk_size: 1000, chunk_overlap: 200)
   chunks
 end
 
+def split_text_by_sentence(text, chunk_size: 1500, chunk_overlap: 200)
+  ps = PragmaticSegmenter::Segmenter.new(text: text)
+  sentences = ps.segment
+  chunks = []
+  current_chunk = ""
+  sentences.each do |sentence|
+    if (current_chunk + sentence).length > chunk_size
+      chunks << current_chunk.strip
+      # For overlap, take last N chars from current_chunk (optionally at sentence boundary)
+      overlap = current_chunk[-chunk_overlap..-1] || ""
+      current_chunk = overlap + sentence
+    else
+      current_chunk += " " unless current_chunk.empty?
+      current_chunk += sentence
+    end
+  end
+  chunks << current_chunk.strip unless current_chunk.empty?
+  chunks
+end
+
 chunks = []
 
+# documents.each do |doc|
+#   split_text(doc[:content]).each_with_index do |chunk, idx|
+#     chunks << {
+#       content: chunk,
+#       metadata: doc[:metadata].merge({ "chunk_index" => idx, "path" => doc[:path] })
+#     }
+#   end
+# end
+
 documents.each do |doc|
-  split_text(doc[:content], chunk_size: 1000, chunk_overlap: 200).each_with_index do |chunk, idx|
+  split_text_by_sentence(doc[:content]).each_with_index do |chunk, idx|
     chunks << {
       content: chunk,
       metadata: doc[:metadata].merge({ "chunk_index" => idx, "path" => doc[:path] })
