@@ -1,4 +1,5 @@
 # Mini Project: Local RAG Knowledge Base with Llama 3.2, Chroma, and Ruby
+![Diagram](./doc/ruby_rag_diagram.png)
 
 ## Project Overview
 
